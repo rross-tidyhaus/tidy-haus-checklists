@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tidy Haus — Consultant Priority Lists</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Calibri, Arial, sans-serif; background: #f5f7fa; }
+    button { cursor: pointer; font-family: inherit; }
+    ::-webkit-scrollbar { height: 6px; width: 6px; }
+    ::-webkit-scrollbar-track { background: #f0f4fa; }
+    ::-webkit-scrollbar-thumb { background: #b0c0d8; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const DARK_BLUE = "#1F3864";
+    const MED_BLUE = "#2E5A88";
+
+    const SERVICES = [
+      { id: "drive",       label: "Google Drive / Cloud Storage", icon: "☁️",  platforms: ["universal"] },
+      { id: "email",       label: "Email",                        icon: "✉️",  platforms: ["gmail", "outlook", "mac_mail"] },
+      { id: "naming",      label: "File Naming & Taxonomy",       icon: "🏷️", platforms: ["mac_finder", "windows_explorer"] },
+      { id: "photos",      label: "Photo & Video",                icon: "📷", platforms: ["apple_photos", "google_photos", "windows_photos"] },
+      { id: "automations", label: "Workflow Automations",         icon: "⚡",  platforms: ["universal"] },
+      { id: "dedup",       label: "Consolidation & Deduplication",icon: "🗂️", platforms: ["mac", "windows", "ios", "android"] },
+    ];
+
+    const PLATFORM_LABELS = {
+      universal:       "Universal",
+      gmail:           "Gmail",
+      outlook:         "Outlook",
+      mac_mail:        "Mac Mail",
+      mac_finder:      "Mac Finder",
+      windows_explorer:"Windows Explorer",
+      apple_photos:    "Apple Photos",
+      google_photos:   "Google Photos",
+      windows_photos:  "Windows Photos",
+      mac:             "Mac",
+      windows:         "Windows PC",
+      ios:             "iPhone / iOS",
+      android:         "Android",
+    };
+
+    const DATA = {
+      drive: {
+        universal: {
+          title: "Google Drive / Cloud Storage",
+          items: [
+            { n:1,  short: "Audit existing structure",                          detail: "Before touching anything, document what exists — screenshot the folder tree, note total file count, and flag the deepest nesting levels. This is your before photo." },
+            { n:2,  short: "Define top-level taxonomy (max 5–7 folders)",       detail: "Agree on no more than 5–7 root folders with the client. Everything must fit under one of these. Common categories: Admin, Clients, Finance, Marketing, Operations, Projects." },
+            { n:3,  short: "Identify and consolidate duplicate/redundant folders", detail: "Look for folders with similar names or purposes (e.g., 'Invoices' and 'Bills'). Merge them before renaming anything." },
+            { n:4,  short: "Establish naming conventions for folders and files", detail: "Set a standard: YYYY-MM-DD_Description for files, TitleCase for folders. Document this in a shared reference sheet before applying." },
+            { n:5,  short: "Create a staging 'Inbox' folder",                   detail: "Set up a '00 - Inbox' or '_Staging' folder at the root level. All new files drop here first — nothing goes directly into the main structure." },
+            { n:6,  short: "Archive old / inactive content",                    detail: "Move anything untouched for 12+ months into a clearly labeled '_Archive - [Year]' folder. Don't delete — archive." },
+            { n:7,  short: "Review and clean up sharing permissions",            detail: "Check 'Shared with me' and 'Shared by me.' Remove outdated shares, confirm active ones are at the right permission level (View vs Edit)." },
+            { n:8,  short: "Apply color-coding or emoji markers to key folders", detail: "Use Drive's built-in color labels for priority folders (e.g., red = urgent, green = active client). Keep it simple — 3–4 colors max." },
+            { n:9,  short: "Set up shortcuts for frequently accessed folders",   detail: "Right-click → Add shortcut to Drive for the 3–5 folders the client accesses daily. This reduces navigation time significantly." },
+            { n:10, short: "Train client and document the system",               detail: "Walk the client through their new structure live on Zoom. Deliver a one-page 'Rules of the Road' document they can reference going forward." },
+          ],
+        },
+      },
+      email: {
+        gmail: {
+          title: "Email — Gmail",
+          items: [
+            { n:1,  short: "Audit inbox size and oldest email date",             detail: "Note total inbox count, oldest email, and rough % that are read vs unread. Sets realistic expectations for the session." },
+            { n:2,  short: "Unsubscribe from newsletters and recurring junk",    detail: "Use Gmail's built-in 'Unsubscribe' link in marketing email banners. Also search 'unsubscribe' to surface hidden subscriptions — bulk select and unsubscribe." },
+            { n:3,  short: "Build a Label structure (max 5–7 top-level)",        detail: "Create parent labels for major categories (Clients, Finance, Admin, Projects). Add nested sub-labels as needed. Avoid over-labeling." },
+            { n:4,  short: "Mass archive everything non-actionable",             detail: "Select All > Select all conversations that match > Archive. Clears inbox without deleting. Client retains full searchability." },
+            { n:5,  short: "Set up Filters for automatic sorting",               detail: "Create filters for known senders and keywords to auto-label and/or archive incoming mail. Prevents inbox rebuild." },
+            { n:6,  short: "Enable Priority Inbox or Multiple Inboxes",          detail: "Settings > Inbox > switch to Priority Inbox (Important + Unread). Game-changer for most clients." },
+            { n:7,  short: "Process remaining inbox to zero (4D method)",        detail: "Do (reply now), Delegate (forward), Defer (star/snooze), Delete. Target: 0 inbox by end of session." },
+            { n:8,  short: "Set up Canned Responses / Templates",                detail: "Settings > Advanced > Templates. Create 3–5 frequently used responses. Saves 10+ minutes per day for heavy emailers." },
+            { n:9,  short: "Configure multiple accounts if needed",              detail: "'Check mail from other accounts' in Settings > Accounts consolidates 2+ Gmail accounts to one inbox." },
+            { n:10, short: "Establish daily maintenance routine",                detail: "2x daily email processing habit. 'Follow Up' label for deferred items. Weekly folder review." },
+          ],
+        },
+        outlook: {
+          title: "Email — Outlook",
+          items: [
+            { n:1,  short: "Audit inbox size and oldest email date",             detail: "Note total count, oldest email, and unread percentage. Right-click inbox folder > Properties to see item count." },
+            { n:2,  short: "Unsubscribe from newsletters and marketing mail",    detail: "Use Outlook's Unsubscribe button in the message banner. Also search 'unsubscribe' in inbox and bulk-process." },
+            { n:3,  short: "Build folder structure (max 5–7 top-level + categories)", detail: "Create top-level folders for key areas. Set up Color Categories (right-click > Categorize) for cross-folder tagging." },
+            { n:4,  short: "Archive old emails to the Archive folder",           detail: "Use Outlook's built-in Archive button or AutoArchive to move emails older than 12 months. Keeps inbox fast and clean." },
+            { n:5,  short: "Set up Rules for automatic sorting",                 detail: "Home > Rules > Manage Rules & Alerts. Create rules for key senders and subjects. Run on new mail going forward." },
+            { n:6,  short: "Enable Focused Inbox",                               detail: "View > Show Focused Inbox. Separates important from other. Adjust by right-clicking: 'Always move to Focused / Other.'" },
+            { n:7,  short: "Process inbox to zero (4D method)",                  detail: "Do, Delegate, Defer (Follow Up flags + Reminders), Delete. Right-click > Flag for Follow-Up on anything deferred." },
+            { n:8,  short: "Set up Quick Steps for frequent actions",            detail: "Home > Quick Steps > New Quick Step. Automate move-to-folder, mark-read, and reply actions with one click." },
+            { n:9,  short: "Configure send/receive schedule and notifications",  detail: "File > Options > Advanced > Send/Receive. Set a schedule and turn off popup notifications — check on a schedule, not reactively." },
+            { n:10, short: "Establish a daily processing routine",               detail: "2x daily email blocks. Flags + Reminders for follow-up. Weekly folder review to ensure Rules are working." },
+          ],
+        },
+        mac_mail: {
+          title: "Email — Mac Mail",
+          items: [
+            { n:1,  short: "Audit inbox size and oldest email date",             detail: "Note inbox count and oldest date. Mac Mail shows mailbox counts in the sidebar. Sets expectations for the session." },
+            { n:2,  short: "Unsubscribe from newsletters",                       detail: "Mac Mail shows an Unsubscribe banner at the top of marketing emails. Also search 'unsubscribe' to find hidden subscriptions." },
+            { n:3,  short: "Create Mailbox folder structure (max 5–7 top-level)", detail: "Mailbox > New Mailbox. Build top-level folders for key categories. Nest sub-mailboxes underneath as needed." },
+            { n:4,  short: "Create Smart Mailboxes for priority views",          detail: "Mailbox > New Smart Mailbox. Build views for: Unread, Today, Flagged, Follow Up. These auto-populate without manual sorting." },
+            { n:5,  short: "Archive all non-actionable emails",                  detail: "Select All in inbox > Archive (or press A). Moves to Archive mailbox. Client retains full searchability." },
+            { n:6,  short: "Set up Rules for automatic sorting",                 detail: "Mail > Settings > Rules > Add Rule. Create rules for known senders/subjects to auto-sort into folders on arrival." },
+            { n:7,  short: "Set up VIP senders",                                 detail: "Right-click a sender > Add to VIPs. Creates a Smart Mailbox for VIP mail and enables special notifications for these senders only." },
+            { n:8,  short: "Process remaining inbox to zero (4D method)",        detail: "Do, Delegate, Defer (Flag + Reminder), Delete. Use Mac Mail's Remind Me (right-click > Remind Me) to snooze emails." },
+            { n:9,  short: "Configure unified inbox for multiple accounts",      detail: "If client has multiple accounts, drag all inboxes under the Inbox section in the sidebar for a unified view." },
+            { n:10, short: "Establish a daily processing routine",               detail: "2x daily email blocks. Smart Mailboxes make this fast — review Flagged and Today views daily. Archive or act; never leave things open-ended." },
+          ],
+        },
+      },
+      naming: {
+        mac_finder: {
+          title: "File Naming & Taxonomy — Mac Finder",
+          items: [
+            { n:1,  short: "Audit and document the current chaos",               detail: "Screenshot the worst folders. Count inconsistently named files. This is your before-state and helps the client appreciate the transformation." },
+            { n:2,  short: "Agree on the naming convention with the client",     detail: "Standard: YYYY-MM-DD_ClientOrProject_Description_v1. Document all agreed abbreviations. Get client sign-off before touching a single file." },
+            { n:3,  short: "Establish folder taxonomy before renaming files",    detail: "Folders first, files second. Work top-down — rename root folders, then sub-folders, then files. Never rename bottom-up." },
+            { n:4,  short: "Rename folders top-down",                            detail: "Start at the root level. Use Finder's rename-in-place (click once on selected name) or multi-file rename (select all > right-click > Rename)." },
+            { n:5,  short: "Use Finder's batch rename for files",                detail: "Select multiple files > right-click > Rename. Use 'Replace Text,' 'Add Text,' or 'Format' to apply naming conventions at scale." },
+            { n:6,  short: "Configure NameQuick for automated renaming",         detail: "Load the agreed taxonomy and naming rules into NameQuick. Test on a sample folder of 10–20 files before running on the full library." },
+            { n:7,  short: "Apply Finder Tags for cross-category retrieval",     detail: "Apply color tags to file types or priority levels (Red = Final, Orange = Draft, Green = Approved). Use Finder's tag sidebar for quick access." },
+            { n:8,  short: "Handle version control files",                       detail: "Ensure drafts include _v1, _v2, _FINAL suffixes. Archive old versions into a _Versions subfolder rather than deleting." },
+            { n:9,  short: "Test the system with a representative sample",       detail: "Before declaring victory, ask client to find a specific file by memory. If found in under 10 seconds, the system works." },
+            { n:10, short: "Deliver a Naming Conventions reference card",        detail: "One-page PDF or shared Google Doc with naming rules, abbreviation glossary, and folder map. Client keeps this as ongoing reference." },
+          ],
+        },
+        windows_explorer: {
+          title: "File Naming & Taxonomy — Windows Explorer",
+          items: [
+            { n:1,  short: "Audit and document the current chaos",               detail: "Screenshot worst folders. Note total file count and naming patterns in use. This is your before-state." },
+            { n:2,  short: "Agree on naming convention with client",             detail: "Standard: YYYY-MM-DD_ClientOrProject_Description_v1. No spaces — use underscores or hyphens. Get client approval before starting." },
+            { n:3,  short: "Establish folder taxonomy before renaming files",    detail: "Top-down always. Root folders first, sub-folders second, files last. Never work bottom-up." },
+            { n:4,  short: "Rename folders top-down",                            detail: "Click the folder name to rename in-place in Windows Explorer. For bulk folder renames, use PowerToys Rename (File Explorer integration)." },
+            { n:5,  short: "Use PowerRename (PowerToys) for bulk file renames",  detail: "Install Microsoft PowerToys > PowerRename. Supports regex-based batch renaming with preview. Essential for large file sets." },
+            { n:6,  short: "Apply folder color-coding (optional)",               detail: "Use Folder Colorizer Pro or Rainbow Folders to visually tag priority folders. Simple system: 3–4 colors max." },
+            { n:7,  short: "Handle version control files",                       detail: "Apply _v1, _v2, _FINAL to drafts. Archive old versions to a _Versions subfolder — don't delete unless client confirms." },
+            { n:8,  short: "Configure file metadata tags where applicable",      detail: "For Office files: right-click > Properties > Details to add tags, author, and comments. These are searchable in Windows Search." },
+            { n:9,  short: "Test the system with a representative sample",       detail: "Ask client to find a specific file by memory. If found in under 10 seconds, the system works." },
+            { n:10, short: "Deliver a Naming Conventions reference card",        detail: "One-page PDF or shared OneDrive doc with rules, abbreviations, and folder map for ongoing client reference." },
+          ],
+        },
+      },
+      photos: {
+        apple_photos: {
+          title: "Photo & Video — Apple Photos",
+          items: [
+            { n:1,  short: "Import all photos to one staging location",          detail: "Gather from Camera Roll, Downloads, Desktop, and external drives into a single 'Unsorted' album in Apple Photos before organizing." },
+            { n:2,  short: "Run duplicate detection",                            detail: "iOS 16+: Photos app > Albums > Duplicates (auto-generated). On Mac: use Gemini 2 or built-in Photos duplicate detection. Review before merging." },
+            { n:3,  short: "Delete obvious junk first",                          detail: "Blurry shots, accidentals, screenshot clutter, and exact duplicates. Use Recents album sorted by type. Quick wins before deeper organizing." },
+            { n:4,  short: "Create Albums for major life/work categories",       detail: "e.g., Family, Travel, Work, Events, Before & After. Albums don't move files — they're organizational views. Max 10–15 albums." },
+            { n:5,  short: "Use Smart Albums for auto-organization (Mac)",       detail: "File > New Smart Album. Set rules: screenshots, videos, specific date ranges, or unlocated photos. Auto-populate as new photos arrive." },
+            { n:6,  short: "Tag faces and confirm identifications",              detail: "In the People album, confirm face identifications and merge duplicates (same person, two entries). Name all frequent subjects." },
+            { n:7,  short: "Add missing location data where important",          detail: "Select photos > right-click > Get Info > Assign a Location. Only for key trips or events — max 10 minutes here." },
+            { n:8,  short: "Set up Shared Albums for family or team",            detail: "File > New Shared Album. Great for event collaboration or sharing client project before/afters. Shared via iCloud link." },
+            { n:9,  short: "Enable iCloud Photos for backup and sync",           detail: "Settings > [Name] > iCloud > Photos > iCloud Photos. Confirm Optimize Storage is on to manage local device space." },
+            { n:10, short: "Establish a monthly maintenance routine",            detail: "First of each month: review Recents, delete junk, check Duplicates album. Set a recurring calendar reminder for the client." },
+          ],
+        },
+        google_photos: {
+          title: "Photo & Video — Google Photos",
+          items: [
+            { n:1,  short: "Import all photos from all sources",                 detail: "Upload from Desktop, Camera Roll backup, and other sources. Use Google Photos Uploader (desktop app) for bulk imports." },
+            { n:2,  short: "Run duplicate detection",                            detail: "Google Photos > Library > Utilities > Free Up Space. Also check 'Screenshots' and 'Blurry photos' in the same panel." },
+            { n:3,  short: "Delete junk photos using 'Free Up Space'",           detail: "Library > Utilities > Free Up Space surfaces blurry, screenshots, and duplicates in one view for fast culling." },
+            { n:4,  short: "Create Albums for major categories",                 detail: "Tap + > Album. Max 10–15 albums: Family, Travel, Work, Events, etc. Google Photos also auto-creates Memories — review these." },
+            { n:5,  short: "Use facial recognition to group people",             detail: "Search > People & Pets. Confirm identifications and merge duplicate face groups. Label all frequent subjects." },
+            { n:6,  short: "Add missing location data where needed",             detail: "Select photo > Edit > Add Location. Focus only on key trips and events — max 10 minutes on this step." },
+            { n:7,  short: "Set up Shared Albums",                               detail: "Shared albums let family or team add photos to a common collection. Share via link or direct Google account invitation." },
+            { n:8,  short: "Configure backup quality settings",                  detail: "Settings > Backup quality. 'Original Quality' uses Google account storage. 'Storage Saver' compresses to 16MP. Confirm with client." },
+            { n:9,  short: "Review and manage storage usage",                    detail: "google.com/account/storage. Check Photos usage vs Drive and Gmail. Upgrade plan or free up space as needed." },
+            { n:10, short: "Establish a monthly review routine",                 detail: "Monthly: review Memories, check Trash (auto-deletes after 60 days), cull new junk. Set recurring calendar reminder for client." },
+          ],
+        },
+        windows_photos: {
+          title: "Photo & Video — Windows Photos",
+          items: [
+            { n:1,  short: "Consolidate all photos to one root folder",          detail: "Gather from Downloads, Desktop, external drives, and phone backups into C:\\Users\\[Name]\\Pictures as the single source of truth." },
+            { n:2,  short: "Run duplicate detection",                            detail: "Use dupeGuru (free) or Awesome Duplicate Photo Finder. Scan the Pictures root folder. Export the report before deleting anything." },
+            { n:3,  short: "Delete junk photos",                                 detail: "Work through library in File Explorer sorted by Size or Date. Delete obvious junk: blurry, accidental, exact duplicates." },
+            { n:4,  short: "Create folder structure by year and event",          detail: "Standard: Pictures > 2024 > 2024-06 Italy Trip. Date-based folders sort automatically and are universally readable." },
+            { n:5,  short: "Rename files with date-based naming convention",     detail: "Use PowerToys PowerRename to batch rename to YYYY-MM-DD_Description format. Most camera files have unhelpful names like IMG_0021.jpg." },
+            { n:6,  short: "Set up OneDrive Camera Upload from mobile",          detail: "OneDrive mobile app > Settings > Camera Upload. All new phone photos auto-sync to OneDrive > Pictures > Camera Roll." },
+            { n:7,  short: "Back up to external drive or secondary cloud",       detail: "Confirm at least one off-device backup (external drive or Backblaze). Never leave photos in one location only." },
+            { n:8,  short: "Tag key photos using Windows file properties",       detail: "Right-click > Properties > Details > Tags. Add searchable keywords. Only worth doing for priority collections." },
+            { n:9,  short: "Create 'Best Of' album folders",                     detail: "For each major category, create a Best Of subfolder with the client's 20–30 favorites. Easy to find and share." },
+            { n:10, short: "Establish a monthly cleanup routine",                detail: "Monthly: import new photos, rename batch, delete junk, confirm backup ran. Set recurring calendar reminder for client." },
+          ],
+        },
+      },
+      automations: {
+        universal: {
+          title: "Workflow Automations",
+          items: [
+            { n:1,  short: "Run a workflow discovery audit with the client",     detail: "Use a structured questionnaire: What do you do manually that you repeat at least weekly? How long does it take? What triggers it? Get a list of 5–10 candidates." },
+            { n:2,  short: "Prioritize by time-cost × frequency",               detail: "Score each workflow: (Minutes per occurrence × occurrences per week). Top 3 highest scores = automate first. Ignore low-frequency tasks for now." },
+            { n:3,  short: "Map the current state of Automation #1",            detail: "Document: Trigger → Steps → Output. Draw it out on screen share. Identify where data flows between apps. This is your blueprint." },
+            { n:4,  short: "Select the right automation tool",                   detail: "Zapier (no-code, broad app support), Make/n8n (complex logic), Apple Shortcuts (iOS/Mac), Windows Task Scheduler (Windows local), Google Apps Script (Google Workspace)." },
+            { n:5,  short: "Build and test Automation #1 in sandbox mode",      detail: "Build with test data first. Run end-to-end. Confirm output matches expected result before connecting live data." },
+            { n:6,  short: "Document Automation #1 with a simple flowchart",    detail: "One-page doc: Trigger → Steps → Output with tool names and credentials notes (no actual passwords). Client must be able to troubleshoot independently." },
+            { n:7,  short: "Train client to monitor and maintain Automation #1", detail: "Show client where to find error logs (Zapier Task History, Make Execution logs). Agree on what to do if it breaks. Set a monthly review date." },
+            { n:8,  short: "Map and build Automation #2",                        detail: "Repeat: map → build → test → document cycle. Don't start #2 until #1 is live and stable for at least one week." },
+            { n:9,  short: "Map and build Automation #3",                        detail: "Same process. By this point clients often suggest new candidates — park them in an Automation Backlog doc for a future session." },
+            { n:10, short: "Set up a quarterly automation review",               detail: "Apps change, workflows evolve. Schedule a quarterly check-in to review all live automations, update broken connections, and identify new opportunities." },
+          ],
+        },
+      },
+      dedup: {
+        mac: {
+          title: "Consolidation & Deduplication — Mac",
+          items: [
+            { n:1,  short: "Audit all storage locations",                        detail: "List every place files live: Desktop, Downloads, Documents, iCloud Drive, Dropbox, Google Drive (local), external drives. Nothing gets missed." },
+            { n:2,  short: "Check storage usage before starting",                detail: "Apple menu > About This Mac > Storage. Screenshot it. This is the baseline to show client how much space is reclaimed." },
+            { n:3,  short: "Run Gemini 2 or dupeGuru for duplicate detection",  detail: "Gemini 2 (paid, great UI) or dupeGuru (free, open source). Scan all locations. Do NOT delete during the scan — export the report first." },
+            { n:4,  short: "Review the duplicate report with the client",        detail: "Walk through the duplicate list on screen share. Client confirms what to keep vs delete — especially business and sentimental items." },
+            { n:5,  short: "Delete exact duplicates",                            detail: "Identical files (same name, same size, same hash). Keep the highest-quality version or the one in the most logical location." },
+            { n:6,  short: "Consolidate near-duplicates",                        detail: "Similar files with slight differences (e.g., _v1 and _v2). Keep the final version, move others to a _Archive folder rather than deleting." },
+            { n:7,  short: "Move scattered files to a single source of truth",   detail: "Everything should live in one primary location (iCloud Drive, Google Drive, or local Documents). Migrate from Desktop and Downloads." },
+            { n:8,  short: "Empty Trash and verify reclaimed space",             detail: "Empty Trash only after client has confirmed all deletions. Re-check About This Mac > Storage to confirm space recovered." },
+            { n:9,  short: "Consolidate cloud accounts if applicable",           detail: "If client has multiple iCloud IDs or Google accounts with overlapping content, identify which is primary and migrate accordingly." },
+            { n:10, short: "Document the consolidated structure",                detail: "One-page folder map showing where everything lives and the rules for adding new files going forward." },
+          ],
+        },
+        windows: {
+          title: "Consolidation & Deduplication — Windows PC",
+          items: [
+            { n:1,  short: "Audit all storage locations",                        detail: "Desktop, Downloads, Documents, OneDrive (local + web), Dropbox, external drives. Map everything before touching anything." },
+            { n:2,  short: "Check storage usage before starting",                detail: "Settings > System > Storage. Screenshot it. Show client total used vs available per drive." },
+            { n:3,  short: "Run dupeGuru or AllDup for duplicate detection",     detail: "dupeGuru (free, open source) or AllDup (free). Scan all drives/folders. Export the report — do NOT delete during the scan." },
+            { n:4,  short: "Review the duplicate report with the client",        detail: "Go through results on screen share. Client confirms which version to keep. Business documents always need client review before deletion." },
+            { n:5,  short: "Delete exact duplicates",                            detail: "Same file, same size, identical content. Keep the version in the most logical folder. Move to Recycle Bin (don't empty yet)." },
+            { n:6,  short: "Consolidate near-duplicates",                        detail: "Keep the final/best version. Move others to a _Archive folder. Only delete near-duplicates with explicit client confirmation." },
+            { n:7,  short: "Move scattered files to a single source of truth",   detail: "Everything should live under Documents (or OneDrive). Migrate from Desktop and Downloads into the agreed folder structure." },
+            { n:8,  short: "Set up OneDrive Known Folder Move",                  detail: "Settings > OneDrive > Manage backup. Enable Desktop, Documents, and Pictures sync to OneDrive. Prevents future scattered-file chaos." },
+            { n:9,  short: "Empty Recycle Bin and verify reclaimed space",       detail: "Only after client confirms all deletions are correct. Re-check Settings > Storage to confirm space recovered." },
+            { n:10, short: "Document the consolidated structure",                detail: "One-page folder map with location rules. Share via OneDrive or email for ongoing reference." },
+          ],
+        },
+        ios: {
+          title: "Consolidation & Deduplication — iPhone / iOS",
+          items: [
+            { n:1,  short: "Audit storage in Settings",                          detail: "Settings > General > iPhone Storage. Note total used and biggest offenders at the top. Screenshot for the client's records." },
+            { n:2,  short: "Offload unused apps",                                detail: "Settings > General > iPhone Storage > Enable Offload Unused Apps. Or manually tap each app > Offload App. Frees space without losing data." },
+            { n:3,  short: "Run duplicate photo detection",                      detail: "iOS 16+: Photos > Albums > Duplicates. Apple auto-identifies exact and near-duplicates. Review each set — don't tap 'Merge All' without reviewing." },
+            { n:4,  short: "Delete duplicate photos",                            detail: "In the Duplicates album, tap each set and merge (keeps highest resolution). Work through the list top to bottom." },
+            { n:5,  short: "Review and delete large video files",                detail: "Settings > iPhone Storage > Photos > scroll down. Videos are the biggest storage offenders. Move favorites to iCloud before deleting." },
+            { n:6,  short: "Delete large message attachments",                   detail: "Settings > General > iPhone Storage > Messages > Review Large Attachments. Sort by size and delete old photos/videos sent in texts." },
+            { n:7,  short: "Clear browser cache",                                detail: "Safari: Settings > Safari > Clear History and Website Data. Chrome: Settings > Privacy > Clear Browsing Data." },
+            { n:8,  short: "Review and delete old voicemails",                   detail: "Phone > Voicemail > scroll to bottom > Deleted Messages > Clear All. Also manually delete any saved voicemails no longer needed." },
+            { n:9,  short: "Back up to iCloud before any major deletions",       detail: "Settings > [Name] > iCloud > iCloud Backup > Back Up Now. Always confirm backup completes before deleting large batches." },
+            { n:10, short: "Set up iCloud auto-backup for ongoing maintenance",  detail: "Settings > [Name] > iCloud > iCloud Backup > toggle ON. Backup occurs automatically when plugged in, locked, and on Wi-Fi." },
+          ],
+        },
+        android: {
+          title: "Consolidation & Deduplication — Android",
+          items: [
+            { n:1,  short: "Audit storage in Settings",                          detail: "Settings > Storage. Note total used, available, and breakdown by category. Screenshot for the client's records." },
+            { n:2,  short: "Uninstall unused apps",                              detail: "Settings > Apps. Sort by Last Used or Size. Uninstall apps unused in the last 90 days. Confirm with client for apps with data." },
+            { n:3,  short: "Run Google Photos duplicate detection",              detail: "Google Photos > Library > Utilities > Free Up Space. Shows duplicates, blurry shots, and screenshots. Review before deleting." },
+            { n:4,  short: "Delete duplicate and junk photos",                   detail: "Work through Free Up Space suggestions. Also manually review Albums > Screenshots and Albums > Videos for bulk-delete candidates." },
+            { n:5,  short: "Clear app caches",                                   detail: "Settings > Apps > [App Name] > Storage > Clear Cache. Do this for the top 5 largest apps. Cache is temporary — always safe to delete." },
+            { n:6,  short: "Review and delete large files in Downloads",         detail: "Files app > Downloads. Sort by size. Delete old APKs, large PDFs, and media files already saved elsewhere." },
+            { n:7,  short: "Move large media to SD card or cloud (if applicable)", detail: "If device has an SD card: Files app > move Videos/Music to SD card. If no SD card, move to Google Drive or back up and delete locally." },
+            { n:8,  short: "Back up to Google Drive before major deletions",     detail: "Settings > Google > Backup > Back up now. Confirm backup completes before deleting any large media batches." },
+            { n:9,  short: "Set up Google One Backup",                           detail: "Google One app > Settings > Manage backup. Enable contacts, SMS, photos, and app data backup. Set to auto-backup on Wi-Fi." },
+            { n:10, short: "Establish a monthly cleanup routine",                detail: "Monthly: run Free Up Space, clear caches, review Downloads. Set a recurring phone reminder for the client." },
+          ],
+        },
+      },
+    };
+
+    function App() {
+      const [activeService, setActiveService] = useState("drive");
+      const [activePlatform, setActivePlatform] = useState("universal");
+      const [tier, setTier] = useState("new");
+      const [checked, setChecked] = useState({});
+
+      const service = SERVICES.find(s => s.id === activeService);
+      const platforms = service?.platforms || ["universal"];
+
+      const handleServiceChange = (id) => {
+        const svc = SERVICES.find(s => s.id === id);
+        setActiveService(id);
+        setActivePlatform(svc?.platforms[0] || "universal");
+      };
+
+      const currentData = DATA[activeService]?.[activePlatform];
+      const items = currentData?.items || [];
+      const title = currentData?.title || "";
+
+      const toggleCheck = (key) => setChecked(prev => ({ ...prev, [key]: !prev[key] }));
+
+      const checkedCount = items.filter(item => checked[`${activeService}-${activePlatform}-${item.n}`]).length;
+
+      return (
+        <div style={{ fontFamily: "Calibri, Arial, sans-serif", minHeight: "100vh", backgroundColor: "#f5f7fa" }}>
+          {/* Header */}
+          <div style={{ backgroundColor: DARK_BLUE, color: "white", padding: "20px 28px 16px" }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", opacity: 0.7, marginBottom: 4 }}>Tidy Haus</div>
+            <div style={{ fontSize: 22, fontWeight: "bold" }}>Consultant Priority Lists</div>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Top 10 priorities by service — in order</div>
+          </div>
+
+          {/* Tier Toggle */}
+          <div style={{ backgroundColor: "#e8edf5", borderBottom: "1px solid #d0daea", padding: "10px 28px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginRight: 4 }}>VIEW:</span>
+            {[{ id: "new", label: "🎓 New Consultant" }, { id: "experienced", label: "⚡ Experienced" }].map(t => (
+              <button key={t.id} onClick={() => setTier(t.id)} style={{
+                padding: "5px 14px", borderRadius: 20,
+                border: tier === t.id ? `2px solid ${DARK_BLUE}` : "2px solid #c0c8d8",
+                backgroundColor: tier === t.id ? DARK_BLUE : "white",
+                color: tier === t.id ? "white" : "#333",
+                fontWeight: tier === t.id ? "bold" : "normal", fontSize: 12
+              }}>{t.label}</button>
+            ))}
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "#888" }}>{checkedCount}/{items.length} completed</span>
+          </div>
+
+          {/* Service Tabs */}
+          <div style={{ backgroundColor: "white", borderBottom: "2px solid #d0daea", padding: "0 20px", display: "flex", overflowX: "auto", gap: 2 }}>
+            {SERVICES.map(svc => (
+              <button key={svc.id} onClick={() => handleServiceChange(svc.id)} style={{
+                padding: "12px 14px", border: "none",
+                borderBottom: activeService === svc.id ? `3px solid ${DARK_BLUE}` : "3px solid transparent",
+                backgroundColor: "transparent",
+                color: activeService === svc.id ? DARK_BLUE : "#666",
+                fontWeight: activeService === svc.id ? "bold" : "normal",
+                fontSize: 13, whiteSpace: "nowrap"
+              }}>{svc.icon} {svc.label}</button>
+            ))}
+          </div>
+
+          {/* Platform Selector */}
+          {platforms.length > 1 && (
+            <div style={{ backgroundColor: "#f0f4fa", borderBottom: "1px solid #d8e2f0", padding: "10px 28px", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginRight: 4 }}>PLATFORM:</span>
+              {platforms.map(p => (
+                <button key={p} onClick={() => setActivePlatform(p)} style={{
+                  padding: "5px 14px", borderRadius: 20,
+                  border: activePlatform === p ? `2px solid ${MED_BLUE}` : "2px solid #c0c8d8",
+                  backgroundColor: activePlatform === p ? MED_BLUE : "white",
+                  color: activePlatform === p ? "white" : "#333",
+                  fontWeight: activePlatform === p ? "bold" : "normal", fontSize: 12
+                }}>{PLATFORM_LABELS[p]}</button>
+              ))}
+            </div>
+          )}
+
+          {/* Content */}
+          <div style={{ maxWidth: 820, margin: "24px auto", padding: "0 20px 40px" }}>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ color: DARK_BLUE, fontSize: 18, fontWeight: "bold", margin: 0 }}>{title}</h2>
+              {tier === "new" && <p style={{ color: "#666", fontSize: 13, margin: "6px 0 0" }}>Full guidance mode — each step includes explanation and context.</p>}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {items.map(item => {
+                const key = `${activeService}-${activePlatform}-${item.n}`;
+                const done = !!checked[key];
+                return (
+                  <div key={key} onClick={() => toggleCheck(key)} style={{
+                    backgroundColor: done ? "#f0f7f0" : "white",
+                    border: `1px solid ${done ? "#b5d6b5" : "#d8e2f0"}`,
+                    borderRadius: 8, padding: "14px 16px", cursor: "pointer",
+                    display: "flex", gap: 14, alignItems: "flex-start"
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      border: `2px solid ${done ? "#4a9e4a" : DARK_BLUE}`,
+                      backgroundColor: done ? "#4a9e4a" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                    }}>
+                      {done
+                        ? <span style={{ color: "white", fontSize: 14, fontWeight: "bold" }}>✓</span>
+                        : <span style={{ color: DARK_BLUE, fontSize: 13, fontWeight: "bold" }}>{item.n}</span>
+                      }
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontWeight: "bold", color: done ? "#3a7a3a" : DARK_BLUE,
+                        fontSize: 14, marginBottom: tier === "new" ? 5 : 0,
+                        textDecoration: done ? "line-through" : "none", opacity: done ? 0.7 : 1
+                      }}>{item.short}</div>
+                      {tier === "new" && (
+                        <div style={{ color: done ? "#666" : "#444", fontSize: 13, lineHeight: 1.5, opacity: done ? 0.6 : 1 }}>
+                          {item.detail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ marginTop: 24, backgroundColor: "#e0e8f0", borderRadius: 8, height: 8, overflow: "hidden" }}>
+              <div style={{
+                height: "100%",
+                width: `${items.length > 0 ? (checkedCount / items.length) * 100 : 0}%`,
+                backgroundColor: checkedCount === items.length ? "#4a9e4a" : MED_BLUE,
+                transition: "width 0.3s", borderRadius: 8
+              }} />
+            </div>
+            {checkedCount === items.length && items.length > 0 && (
+              <div style={{ textAlign: "center", marginTop: 12, color: "#4a9e4a", fontWeight: "bold", fontSize: 14 }}>
+                ✅ All {items.length} steps complete!
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
